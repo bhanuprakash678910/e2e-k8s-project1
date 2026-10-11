@@ -18,7 +18,24 @@ pipeline {
                 withAWS(credentials: 'aws-key', region: 'us-east-1') {
                 dir('EKS-TF') {
                     script {
-                        sh 'terraform init'
+                        sh '''
+                        set +e
+                        output=$(terraform init -no-color 2>&1)
+                        status=$?
+                        set -e
+
+                        printf '%s\\n' "$output"
+
+                        if [ "$status" -eq 0 ]; then
+                            echo "Terraform backend initialized successfully."
+                        elif printf '%s\\n' "$output" | grep -Fq "Backend configuration changed"; then
+                            echo "Backend configuration changed. Reinitializing with -reconfigure..."
+                            terraform init -reconfigure
+                        else
+                            echo "Terraform initialization failed."
+                            exit "$status"
+                        fi
+                        '''
                     }
                 }
                 }
