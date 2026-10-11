@@ -6,3 +6,5 @@ variable "sg-name" {}
 variable "instance-name" {}
 variable "key-name" {}
 variable "iam-role" {}
+variable "iam-instance-profile" {}
+variable "instance_type" {}
