@@ -37,6 +37,17 @@ resource "aws_subnet" "public-subnet2" {
   }
 }
 
+resource "aws_subnet" "public-subnet3" {
+  vpc_id                  = data.aws_vpc.vpc.id
+  cidr_block              = "10.0.4.0/24"
+  availability_zone       = "ap-southeast-2b"
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = var.subnet-name3
+  }
+}
+
 resource "aws_route_table" "rt2" {
   vpc_id = data.aws_vpc.vpc.id
   route {
