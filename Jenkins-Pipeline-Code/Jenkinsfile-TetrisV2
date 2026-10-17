@@ -6,6 +6,8 @@ pipeline {
     }
     environment  {
         SCANNER_HOME=tool 'sonar-scanner'
+        GIT_USER_NAME = 'bhanuprakash678910'
+        GIT_REPO_NAME = 'e2e-k8s-project1'
     }
     stages {
         stage('Cleaning Workspace') {
@@ -22,8 +24,8 @@ pipeline {
             steps {
                 dir('Tetris-V2') {
                     withSonarQubeEnv('sonar-server') {
-                        sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=TetrisVersion1.0 \
-                        -Dsonar.projectKey=TetrisVersion1.0 '''
+                        sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=TetrisVersion2.0 \
+                        -Dsonar.projectKey=TetrisVersion2.0 '''
                     }
                 }
             }
@@ -82,7 +84,7 @@ pipeline {
         }
         stage("TRIVY Image Scan") {
             steps {
-                sh 'trivy image bhanuprakashece410/tetrisv2:${BUILD_NUMBER} > trivyimage.txt' 
+                sh 'trivy image bhanuprakashece410/tetrisv1:${BUILD_NUMBER} > trivyimage.txt' 
             }
         }
         stage('Checkout Code') {
@@ -92,7 +94,7 @@ pipeline {
         }
         stage('Update Deployment file') {
             environment {
-                GIT_REPO_NAME = "e2e-k8s-project1.git"
+                GIT_REPO_NAME = "e2e-k8s-project1"
                 GIT_USER_NAME = "bhanuprakash678910"
             }
             steps {
@@ -107,8 +109,13 @@ pipeline {
                             echo $imageTag
                             sed -i "s/tetrisv2:${imageTag}/tetrisv2:${BUILD_NUMBER}/" deployment-service.yml
                             git add deployment-service.yml
-                            git commit -m "Update deployment Image to version \${BUILD_NUMBER}"
-                            git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:master
+                            if ! git diff --cached --quiet; then
+                               git commit -m "Update deployment Image to version ${BUILD_NUMBER}"
+                               git -c http.extraheader="AUTHORIZATION: basic $(printf '%s' "x-access-token:${GITHUB_TOKEN}" | base64 | tr -d '\\n')" \
+                push https://github.com/bhanuprakash678910/e2e-k8s-project1.git HEAD:master
+                            else
+                               echo "No changes to commit."
+                            fi
                         '''
                     }
                 }
